@@ -51,13 +51,22 @@ public class MongoCommonDao {
      * @param filter
      * @return
      */
-    public MongoCursor<Document> find(String dbName,String collectionName, Map<String,Object> filter) {
+    public MongoCursor<Document> find(String dbName,String collectionName, Map<String,Object> filter, Map<String,Object> sort) {
         MongoCollection collection = getCollection(dbName, collectionName);
         BasicDBObject basicDBObject = new BasicDBObject();
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             basicDBObject.put(entry.getKey(), entry.getValue());
         }
-        return collection.find(basicDBObject).iterator();
+        if(sort == null){
+            return collection.find(basicDBObject).iterator();
+        }else{
+            BasicDBObject sortBson = new BasicDBObject();
+            for (Map.Entry<String, Object> entry : filter.entrySet()) {
+                sortBson.put(entry.getKey(), entry.getValue());
+            }
+            return collection.find(basicDBObject).sort(sortBson).iterator();
+        }
+
     }
 
     /**
@@ -69,14 +78,23 @@ public class MongoCommonDao {
      * @param size
      * @return
      */
-    public PageBean<Document> findBypage(String dbName,String collectionName, Map<String,Object> filter,Integer page, Integer size){
+    public PageBean<Document> findBypage(String dbName,String collectionName, Map<String,Object> filter,Integer page, Integer size, Map<String,Object> sort){
         MongoCollection collection = getCollection(dbName, collectionName);
         BasicDBObject basicDBObject = new BasicDBObject();
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             basicDBObject.put(entry.getKey(), entry.getValue());
         }
         Long total = collection.count(basicDBObject);
-        MongoCursor<Document> documents = collection.find(basicDBObject).skip((page-1)*size).limit(size).iterator();
+        MongoCursor<Document> documents = null;
+        if(sort == null){
+            documents = collection.find(basicDBObject).skip((page-1)*size).limit(size).iterator();
+        }else{
+            BasicDBObject sortBson = new BasicDBObject();
+            for (Map.Entry<String, Object> entry : filter.entrySet()) {
+                sortBson.put(entry.getKey(), entry.getValue());
+            }
+            documents = collection.find(basicDBObject).sort(sortBson).skip((page-1)*size).limit(size).iterator();
+        }
         List<Document> content = new ArrayList<Document>();
         while (documents.hasNext()){
             content.add(documents.next());
