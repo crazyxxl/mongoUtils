@@ -125,4 +125,11 @@ public class MongoCommonDao {
         return collection;
     }
 
+    /**
+     * 关闭数据库链接
+     */
+    public void closeDB(){
+        mongoClient.close();
+    }
+
 }
